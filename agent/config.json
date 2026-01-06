@@ -1,7 +1,7 @@
 {
   "policy": {
     "critical": "kill",
-    "high": "block",
+    "high": "kill",
     "medium": "alert",
     "low": "log"
   }

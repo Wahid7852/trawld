@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import fetch from "node-fetch";
 import { WebSocket } from "ws";
 import { v4 as uuidv4 } from "uuid";
@@ -5,6 +6,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { spawnSync } from "child_process";
+import express from "express";
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -19,8 +21,23 @@ const DATA_DIR = path.join(__dirname, "data");
 const ID_PATH = path.join(DATA_DIR, "machine_id.txt");
 const LOG_PATH = path.join(DATA_DIR, "actions.log");
 
+const LOCAL_PORT = 7654;
+const app = express();
+app.use(express.json());
+
+// State
+const managedProcesses = new Map(); // pid -> { packages: [], ... }
+const cveCache = new Map(); // pkgKey -> [{ cve, severity, fix }]
+
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function logAction(msg) {
+  ensureDataDir();
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  fs.appendFileSync(LOG_PATH, line);
+  console.log(line.trim());
 }
 
 function loadOrCreateId() {
@@ -43,6 +60,7 @@ function readConfig() {
   }
 }
 
+// ... Inventory helpers (parsePackageLock, pipFreeze) ...
 function parsePackageLock() {
   const candidates = [
     path.join(process.cwd(), "package-lock.json"),
@@ -98,71 +116,117 @@ async function register(machineId) {
 }
 
 async function sendInventory(machineId, packages) {
-  const payload = { machine_id: machineId, packages };
   try {
-    await fetch(`${CLOUD_HTTP}/inventory`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    await fetch(`${CLOUD_HTTP}/inventory`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ uuid: machineId, packages })
+    });
     logAction(`inventory sent ${packages.length} packages`);
-    return true;
-  } catch {
-    logAction(`inventory failed`);
-    return false;
-  }
+  } catch {}
 }
 
-function logAction(text) {
-  ensureDataDir();
-  const line = `[${new Date().toISOString()}] ${text}\n`;
-  fs.appendFileSync(LOG_PATH, line);
-}
+function enforce(pid, alert) {
+  const config = readConfig();
+  const policy = config.policy || {};
+  const action = policy[alert.severity] || "log";
 
-function enforce(policy, alert, inventory) {
-  const sev = alert.severity || "low";
-  const action = policy[sev] || "log";
-  const pkg = alert.package?.name || "";
-  const installed = inventory.some(p => p.ecosystem === alert.package?.ecosystem && p.name === pkg);
-  if (!installed) return;
+  logAction(`ENFORCE: PID=${pid} Sev=${alert.severity} Action=${action} Pkg=${alert.package?.name}`);
+
   if (action === "kill") {
-    logAction(`kill process for ${pkg} due to ${alert.cve_id}`);
-  } else if (action === "block") {
-    logAction(`block network for ${pkg} due to ${alert.cve_id}`);
-  } else if (action === "alert") {
-    logAction(`alert user for ${pkg} due to ${alert.cve_id}`);
-  } else {
-    logAction(`log event for ${pkg} due to ${alert.cve_id}`);
+    try {
+      process.kill(pid, "SIGKILL");
+      logAction(`KILLED PID ${pid}`);
+    } catch (e) {
+      logAction(`Failed to kill PID ${pid}: ${e.message}`);
+    }
   }
 }
+
+// Local Control Plane
+app.post("/register", async (req, res) => {
+  const { pid, packages, cwd } = req.body;
+  if (!pid || !packages) return res.status(400).json({ error: "Missing pid or packages" });
+
+  logAction(`HOOK: Process registered PID=${pid} CWD=${cwd} Pkgs=${packages.length}`);
+  managedProcesses.set(pid, { packages, cwd, registeredAt: new Date() });
+
+  // 1. Check against local CVE cache immediately
+  for (const pkg of packages) {
+    const key = `${pkg.ecosystem}:${pkg.name}@${pkg.version}`;
+    if (cveCache.has(key)) {
+      const alerts = cveCache.get(key);
+      for (const alert of alerts) {
+         enforce(pid, alert);
+      }
+    }
+  }
+
+  // 2. Send to Cloud for authoritative check
+  const machineId = loadOrCreateId();
+  await sendInventory(machineId, packages); 
+
+  res.json({ status: "monitored" });
+});
+
+app.post("/event", (req, res) => {
+  const { pid, type, detail } = req.body;
+  logAction(`EVENT: PID=${pid} Type=${type} Detail=${JSON.stringify(detail)}`);
+  res.json({ ok: true });
+});
 
 async function main() {
   const machineId = loadOrCreateId();
-  const inventory = [...parsePackageLock(), ...pipFreeze()];
-  const config = readConfig();
-  async function tryRegisterAndInventory() {
-    await register(machineId);
-    await sendInventory(machineId, inventory);
+  logAction(`Agent starting. Machine ID: ${machineId}`);
+
+  await register(machineId);
+  
+  // Start Local Server
+  app.listen(LOCAL_PORT, "127.0.0.1", () => {
+    logAction(`System Agent listening on 127.0.0.1:${LOCAL_PORT}`);
+  });
+
+  // Initial full scan (legacy support)
+  const npmDeps = parsePackageLock();
+  const pyDeps = pipFreeze();
+  const allDeps = [...npmDeps, ...pyDeps];
+  if (allDeps.length) {
+    await sendInventory(machineId, allDeps);
   }
-  await tryRegisterAndInventory();
-  setInterval(tryRegisterAndInventory, 60000);
-  function connectWS() {
-    const ws = new WebSocket(CLOUD_WS);
-    ws.on("open", () => {
-      ws.send(JSON.stringify({ type: "HELLO", machine_id: machineId }));
-      const hb = setInterval(() => {
-        try { ws.send(JSON.stringify({ type: "HEARTBEAT" })); } catch {}
-      }, 30000);
-      ws.on("close", () => clearInterval(hb));
-    });
-    ws.on("message", msg => {
+
+  // Connect WS
+  function connectWs() {
+    const ws = new WebSocket(`${CLOUD_WS}?machine_id=${machineId}`);
+    ws.on("open", () => logAction("WS Connected"));
+    ws.on("message", (data) => {
       try {
-        const data = JSON.parse(msg.toString());
-        if (data.type === "CVE_ALERT") {
-          enforce(config.policy, data, inventory);
+        const msg = JSON.parse(data);
+        if (msg.type === "CVE_ALERT") {
+          logAction(`ALERT: ${msg.package.name} (${msg.severity}) - ${msg.cve_id}`);
+          
+          // Update Cache
+          const pkg = msg.package;
+          const key = `${pkg.ecosystem}:${pkg.name}@${pkg.version}`; 
+          
+          if (!cveCache.has(key)) cveCache.set(key, []);
+          cveCache.get(key).push(msg);
+
+          // Find affected PIDs
+          for (const [pid, proc] of managedProcesses.entries()) {
+             const hasPkg = proc.packages.find(p => p.name === pkg.name && p.ecosystem === pkg.ecosystem); 
+             if (hasPkg) {
+                enforce(pid, msg);
+             }
+          }
         }
-      } catch {}
+      } catch (e) {
+        console.error("WS Error", e);
+      }
     });
-    ws.on("close", () => setTimeout(connectWS, 5000));
+    ws.on("close", () => setTimeout(connectWs, 5000));
     ws.on("error", () => {});
   }
-  connectWS();
+  connectWs();
 }
 
 main().catch(() => {});
