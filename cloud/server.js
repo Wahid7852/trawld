@@ -21,11 +21,35 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_AN
 const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 const REDIS_URL = process.env.REDIS_URL || "";
-const redis = REDIS_URL ? new Redis(REDIS_URL) : null;
+const redis = REDIS_URL ? new Redis(REDIS_URL, {
+  maxRetriesPerRequest: null, // Allow infinite retries
+  retryStrategy(times) {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  }
+}) : null;
 
 if (redis) {
-  redis.on("error", (err) => console.error("Redis Error:", err));
-  redis.on("connect", () => console.log("Connected to Redis"));
+  redis.on("error", (err) => {
+    // Suppress simple connection errors to avoid spam
+    if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+      console.log(`Redis connection failed (${err.code}), retrying...`);
+    } else {
+      console.error("Redis Error:", err.message);
+    }
+  });
+  
+  let isConnected = false;
+  redis.on("connect", () => {
+    if (!isConnected) {
+      console.log("Connected to Redis");
+      isConnected = true;
+    }
+  });
+  
+  redis.on("reconnecting", () => {
+    // console.log("Reconnecting to Redis...");
+  });
 } else {
   console.log("Redis not configured");
 }
@@ -218,18 +242,20 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/inventory", async (req, res) => {
-  const { machine_id, packages } = req.body || {};
-  if (!machine_id || !Array.isArray(packages)) return res.status(400).json({ error: "machine_id and packages required" });
+  // NOTE: agent historically sent uuid as `uuid` or `machine_id` depending on version.
+  const { machine_id, uuid, packages } = req.body || {};
+  const id = machine_id || uuid;
+  if (!id || !Array.isArray(packages)) return res.status(400).json({ error: "machine_id (or uuid) and packages required" });
   const list = packages.map(p => ({
     ecosystem: p.ecosystem,
     name: p.name,
     version: p.version
   }));
-  state.packagesByMachine.set(machine_id, list);
+  state.packagesByMachine.set(id, list);
   if (supabase) {
     for (const p of list) {
       await supabase.from("machine_packages").insert({
-        machine_id,
+        machine_id: id,
         ecosystem: p.ecosystem,
         name: p.name,
         version: p.version
@@ -240,12 +266,59 @@ app.post("/inventory", async (req, res) => {
 });
 
 app.get("/alerts", (req, res) => {
-  res.json({ alerts: state.alerts.slice(-100) });
+  const { machine_id, status } = req.query || {};
+  let alerts = state.alerts.slice(-250);
+  if (machine_id) alerts = alerts.filter(a => a.machine_id === machine_id);
+  if (status) alerts = alerts.filter(a => (a.status || "open") === status);
+  res.json({ alerts });
 });
 
 app.get("/machines", (req, res) => {
-  const list = Array.from(state.machines.values());
+  const { machine_id } = req.query || {};
+  let list = Array.from(state.machines.values());
+  if (machine_id) list = list.filter(m => m.uuid === machine_id);
   res.json({ machines: list });
+});
+
+// Machine inventory (for per-machine dashboard tooling)
+app.get("/inventory", (req, res) => {
+  const { machine_id } = req.query || {};
+  if (!machine_id) return res.status(400).json({ error: "machine_id required" });
+  const packages = state.packagesByMachine.get(machine_id) || [];
+  res.json({ machine_id, packages });
+});
+
+// Alert tooling
+app.post("/alerts/:id/ack", (req, res) => {
+  const { id } = req.params;
+  const alert = state.alerts.find(a => a.id === id);
+  if (!alert) return res.status(404).json({ error: "alert not found" });
+  alert.status = "ack";
+  res.json({ ok: true, alert });
+});
+
+// Demo tooling: seed a synthetic alert for UI / demo purposes
+app.post("/demo/seed-alert", (req, res) => {
+  const machines = Array.from(state.machines.values());
+  const machine = machines[0];
+  if (!machine) {
+    return res.status(400).json({ error: "no machines registered to attach demo alert" });
+  }
+  const demoPayload = {
+    severity: "high",
+    package: { ecosystem: "npm", name: "lodash", version: "4.17.15" },
+    cve_id: "DEMO-CVE-0000",
+    fix: "4.17.21",
+    status: "open"
+  };
+  createAlert(machine.uuid, demoPayload)
+    .then(() => {
+      res.json({ ok: true, demo: true });
+    })
+    .catch((e) => {
+      console.error("demo/seed-alert failed", e);
+      res.status(500).json({ error: "failed to create demo alert" });
+    });
 });
 
 const __dirname = process.cwd();
@@ -257,10 +330,11 @@ process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 
-app.get("/dashboard", (req, res) => {
+// Serve dashboard at root
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-app.use("/dashboard", express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public")));
 
 const server = app.listen(PORT, () => {
   console.log(`Cloud CVE Brain listening on http://localhost:${PORT}`);
