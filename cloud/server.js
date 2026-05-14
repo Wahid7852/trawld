@@ -164,6 +164,17 @@ function getPackageAlertKey(projectId, pkg, vulnId) {
   return `${projectId}:${pkg.ecosystem}:${pkg.name}@${pkg.version}:${vulnId}`;
 }
 
+function isValidAlertRecord(alert) {
+  return Boolean(
+    alert?.id &&
+      alert.project_id &&
+      alert.cve_id &&
+      alert.package?.ecosystem &&
+      alert.package?.name &&
+      alert.package?.version
+  );
+}
+
 function normalizeSeverity(severityEntries) {
   if (!severityEntries || severityEntries.length === 0) return "low";
   const cvssEntry = severityEntries.find((entry) => (entry.type || "").toLowerCase().includes("cvss"));
@@ -928,13 +939,23 @@ async function loadState() {
       db.collection("agents").find({}).toArray()
     ]);
 
-    machines.forEach((machine) => state.machines.set(machine.id || machine.uuid, { ...machine, uuid: machine.id || machine.uuid }));
-    projects.forEach((project) => state.projects.set(project.id, project));
+    machines.forEach((machine) => {
+      const machineId = machine.id || machine.uuid;
+      if (machineId) state.machines.set(machineId, { ...machine, uuid: machineId });
+    });
+    projects.forEach((project) => {
+      if (project.id) state.projects.set(project.id, project);
+    });
     packages.forEach((pkg) => {
+      if (!pkg.project_id) return;
       if (!state.projectPackages.has(pkg.project_id)) state.projectPackages.set(pkg.project_id, []);
       state.projectPackages.get(pkg.project_id).push(pkg);
     });
     alerts.forEach((alert) => {
+      if (!isValidAlertRecord(alert)) {
+        console.warn(`Skipping malformed alert record id=${alert?.id || "unknown"}`);
+        return;
+      }
       state.alerts.push(alert);
       state.alertIndex.set(getPackageAlertKey(alert.project_id, alert.package, alert.cve_id), alert.id);
     });

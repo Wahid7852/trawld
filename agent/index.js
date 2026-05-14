@@ -799,13 +799,13 @@ function ensureRootWatcher(rootPath) {
 function getCloudConfig() {
   const config = readConfig();
   return {
-    http: config.cloud?.http || process.env.CLOUD_HTTP || DEFAULT_CLOUD_HTTP,
-    ws: config.cloud?.ws || process.env.CLOUD_WS || DEFAULT_CLOUD_WS,
+    http: process.env.CLOUD_HTTP || config.cloud?.http || DEFAULT_CLOUD_HTTP,
+    ws: process.env.CLOUD_WS || config.cloud?.ws || DEFAULT_CLOUD_WS,
     agentSessionId:
-      config.cloud?.agentSessionId ||
-      config.cloud?.agentToken ||
       process.env.SENTRY_AGENT_SESSION_ID ||
       process.env.SENTRY_AGENT_TOKEN ||
+      config.cloud?.agentSessionId ||
+      config.cloud?.agentToken ||
       ""
   };
 }
@@ -843,6 +843,7 @@ async function registerMachine() {
 
   let attempts = 0;
   const cloud = getCloudConfig();
+  logAction(`registering with cloud ${cloud.http}`);
 
   while (true) {
     try {

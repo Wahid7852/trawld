@@ -1,15 +1,30 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const localCloudHttp = process.env.CLOUD_HTTP || 'http://127.0.0.1:4000';
+const localCloudWs = process.env.CLOUD_WS || 'ws://127.0.0.1:4000/agents';
+
 const commands = [
-  { name: 'CLOUD', cwd: 'cloud', cmd: 'npm', args: ['start'] },
-  { name: 'AGENT', cwd: 'agent', cmd: 'npm', args: ['start'] }
+  { name: 'CLOUD', cwd: 'cloud', cmd: npmCommand, args: ['start'], env: process.env },
+  {
+    name: 'AGENT',
+    cwd: 'agent',
+    cmd: npmCommand,
+    args: ['start'],
+    env: {
+      ...process.env,
+      CLOUD_HTTP: localCloudHttp,
+      CLOUD_WS: localCloudWs,
+      SENTRY_DEFAULT_CLOUD_HTTP: localCloudHttp
+    }
+  }
 ];
 
-commands.forEach(({ name, cwd, cmd, args }) => {
+commands.forEach(({ name, cwd, cmd, args, env }) => {
   const child = spawn(cmd, args, {
     cwd: path.join(__dirname, cwd),
-    shell: true,
+    env,
     stdio: 'pipe'
   });
 
