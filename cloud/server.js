@@ -96,7 +96,10 @@ async function ensureIndexes() {
 
 async function ensureStateLoaded() {
   if (!stateLoadPromise) {
-    stateLoadPromise = loadState();
+    stateLoadPromise = loadState().catch((error) => {
+      stateLoadPromise = null; // allow retry on next request
+      throw error;
+    });
   }
   return stateLoadPromise;
 }
@@ -935,7 +938,7 @@ async function ingestProjectInventory(payload) {
 
 async function loadState() {
   await connectDB();
-  if (!db) return;
+  if (!db) throw new Error('MongoDB unavailable');
 
   try {
     const [machines, projects, packages, alerts, vulnerabilities, snapshots, agents] = await Promise.all([
@@ -1244,9 +1247,23 @@ app.post("/scan-project/:id", async (req, res) => {
 
 app.post("/scan-machine/:id", async (req, res) => {
   const machineId = req.params.id;
-  const projectIds = Array.from(state.projects.values())
+  let projectIds = Array.from(state.projects.values())
     .filter((project) => project.machine_id === machineId)
     .map((project) => project.id);
+
+  // State may be empty on a cold Vercel instance that failed to load — query DB directly
+  if (projectIds.length === 0 && db) {
+    const dbProjects = await db.collection("projects").find({ machine_id: machineId }).toArray();
+    for (const p of dbProjects) {
+      if (!p.id) continue;
+      state.projects.set(p.id, p);
+      if (!state.projectPackages.has(p.id)) {
+        const pkgs = await db.collection("project_packages").find({ project_id: p.id }).toArray();
+        state.projectPackages.set(p.id, pkgs);
+      }
+    }
+    projectIds = dbProjects.filter((p) => p.id).map((p) => p.id);
+  }
 
   if (projectIds.length === 0) return res.status(404).json({ error: "machine or projects not found" });
 
