@@ -4,6 +4,16 @@ import { scanMachine } from '../api/machines'
 import useAppShell from '../hooks/useAppShell'
 import useMachines from '../hooks/useMachines'
 
+function getTimeAgo(dateStr) {
+  if (!dateStr) return '—'
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000
+  if (diff < 0) return 'just now'
+  if (diff < 60) return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
 export default function MachinesPage() {
   const { refreshToken, requestRefresh } = useAppShell()
   const { data, loading } = useMachines(refreshToken)
@@ -52,13 +62,13 @@ export default function MachinesPage() {
         ) : machines.length === 0 ? (
           <p className="text-[12px] text-tr-dim">No machines found.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {machines.map((m) => (
               <div key={m.uuid} className="card p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="min-w-0">
                     <p className="text-[13px] font-semibold text-tr-text truncate">{m.hostname || m.uuid}</p>
-                    <p className="text-[10px] text-tr-dim font-mono mt-0.5 truncate">{m.uuid}</p>
+                    <p className="text-[10px] text-tr-dim mt-0.5 truncate">{m.os || '—'} · {getTimeAgo(m.last_seen)}</p>
                   </div>
                   <span className={`status-badge shrink-0 ml-2 ${m.online ? 'badge-green' : 'badge-red'}`}>
                     {m.online ? 'online' : 'offline'}
@@ -67,9 +77,9 @@ export default function MachinesPage() {
 
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {[
-                    { label: 'OS',       value: m.os || '—' },
                     { label: 'Projects', value: m.project_count || 0 },
                     { label: 'Packages', value: m.package_count || 0 },
+                    { label: 'Findings', value: m.alert_count || 0 },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-tr-bg border border-tr-border rounded p-2">
                       <p className="text-[9px] text-tr-dim uppercase tracking-[0.5px]">{label}</p>
