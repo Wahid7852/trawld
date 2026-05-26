@@ -1251,7 +1251,7 @@ app.post("/scan-machine/:id", async (req, res) => {
     .filter((project) => project.machine_id === machineId)
     .map((project) => project.id);
 
-  // State may be empty on a cold Vercel instance that failed to load — query DB directly
+  // Direct DB fallback if in-memory state is missing (cold Vercel instance)
   if (projectIds.length === 0 && db) {
     const dbProjects = await db.collection("projects").find({ machine_id: machineId }).toArray();
     for (const p of dbProjects) {
@@ -1263,6 +1263,30 @@ app.post("/scan-machine/:id", async (req, res) => {
       }
     }
     projectIds = dbProjects.filter((p) => p.id).map((p) => p.id);
+  }
+
+  // Hostname migration fallback: handle agent reinstalls where UUID changed but hostname is same
+  if (projectIds.length === 0) {
+    const machine = state.machines.get(machineId);
+    if (machine?.hostname) {
+      const legacyIds = Array.from(state.machines.entries())
+        .filter(([id, m]) => id !== machineId && m.hostname === machine.hostname)
+        .map(([id]) => id);
+      for (const legacyId of legacyIds) {
+        const legacyProjects = Array.from(state.projects.values()).filter((p) => p.machine_id === legacyId);
+        if (legacyProjects.length > 0) {
+          // Adopt these projects under the current machine_id
+          for (const p of legacyProjects) {
+            p.machine_id = machineId;
+            state.projects.set(p.id, p);
+            persistProjectState(p.id).catch(() => {});
+          }
+          projectIds = legacyProjects.map((p) => p.id);
+          console.log(`[scan-machine] Migrated ${projectIds.length} projects from ${legacyId} to ${machineId}`);
+          break;
+        }
+      }
+    }
   }
 
   if (projectIds.length === 0) return res.status(404).json({ error: "machine or projects not found" });
