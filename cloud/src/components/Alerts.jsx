@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react'
 import { acknowledgeAlert, remediateAlert as remediateAlertRequest } from '../api/alerts'
 
 const SEV_STYLE = {
-  critical: { dot: 'bg-tr-red',    label: 'text-tr-red',    badge: 'badge-red'    },
-  high:     { dot: 'bg-tr-yellow', label: 'text-tr-yellow', badge: 'badge-yellow' },
-  medium:   { dot: 'bg-tr-blue',   label: 'text-tr-blue',   badge: 'badge-blue'   },
-  low:      { dot: 'bg-[#3d444d]', label: 'text-tr-dim',    badge: 'badge-gray'   },
+  critical: { badge: 'badge-red'    },
+  high:     { badge: 'badge-yellow' },
+  medium:   { badge: 'badge-blue'   },
+  low:      { badge: 'badge-gray'   },
 }
 
 export default function Alerts({ data, loading, onChange }) {
@@ -14,14 +14,14 @@ export default function Alerts({ data, loading, onChange }) {
   const [busyId, setBusyId]     = useState('')
 
   const alerts = useMemo(() => {
-    return (data.alerts || []).filter((alert) => {
+    return (data?.alerts || []).filter((alert) => {
       const matchesQuery = query.trim() === '' || [
         alert.package?.name, alert.cve_id, alert.project_name, alert.machine_id, alert.package?.version,
       ].filter(Boolean).some((v) => String(v).toLowerCase().includes(query.toLowerCase()))
       const matchesSeverity = severity === 'all' || alert.severity === severity
       return matchesQuery && matchesSeverity
     })
-  }, [data.alerts, query, severity])
+  }, [data?.alerts, query, severity])
 
   const activeFindings  = useMemo(() => alerts.filter((a) => a.status !== 'ack').length, [alerts])
   const autoUpdateReady = useMemo(() => alerts.filter((a) => a.fix && a.status !== 'ack').length, [alerts])
