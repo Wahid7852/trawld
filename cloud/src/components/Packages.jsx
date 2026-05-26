@@ -19,7 +19,7 @@ export default function Packages({ data, loading, onChange }) {
       const matchesQuery = query.trim() === '' || [pkg.name, pkg.project_label, pkg.project_root, pkg.version, pkg.machine_id]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(query.toLowerCase()))
-      const matchesEco = ecosystem === 'all' || pkg.ecosystem === ecosystem
+      const matchesEco = ecosystem === 'all' || (pkg.ecosystem || '').toLowerCase() === ecosystem.toLowerCase()
       return matchesQuery && matchesEco
     })
   }, [packages, query, ecosystem])
@@ -92,8 +92,8 @@ export default function Packages({ data, loading, onChange }) {
                     <td colSpan={6} className="px-4 py-8 text-tr-dim text-center">No packages match your filters.</td>
                   </tr>
                 ) : (
-                  filtered.map((pkg, i) => (
-                    <tr key={`${pkg.project_id}-${pkg.name}-${i}`} className="hover:bg-[#1c2128] transition-colors">
+                  filtered.map((pkg) => (
+                    <tr key={`${pkg.project_id}-${pkg.name}-${pkg.version}`} className="hover:bg-[#1c2128] transition-colors">
                       <td className="px-4 py-2.5">
                         <p className="text-tr-text font-medium">{pkg.name}</p>
                         <p className="text-[10px] text-tr-dim">{pkg.ecosystem}</p>
