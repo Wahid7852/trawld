@@ -13,7 +13,7 @@
   "dependencies": {
     "chart.js": "^4.5.1",
     "dotenv": "^17.2.3",
-    "express": "^4.18.2",
+    "express": "^4.22.2",
     "mongodb": "^7.1.0",
     "node-fetch": "^3.3.2",
     "react-router-dom": "^7.9.4",
