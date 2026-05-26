@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>watchd — light vs dark</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #13171c; color: #e6edf3; font-family: 'Inter', system-ui, sans-serif; padding: 24px; }
+  h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #7d8590; margin-bottom: 24px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .mode-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;
+    color: #7d8590;
+  }
+
+  /* ======= DARK CARD ======= */
+  .dark-preview {
+    background: #080c10;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .dark-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid #161b22;
+    background: rgba(8,12,16,0.95);
+  }
+  .dark-logo { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #e6edf3; }
+  .dark-logomark {
+    width: 22px; height: 22px; background: #238636; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace;
+  }
+  .dark-nav-links { display: flex; gap: 20px; }
+  .dark-nav-links span { font-size: 11px; color: #7d8590; }
+  .dark-nav-cta {
+    padding: 5px 12px; border-radius: 5px; font-size: 11px; font-weight: 600;
+    background: #238636; color: #fff;
+  }
+
+  .dark-hero {
+    padding: 36px 24px 28px; text-align: center;
+    background: radial-gradient(ellipse at top, rgba(35,134,54,0.1) 0%, transparent 65%);
+  }
+  .dark-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid #238636; background: rgba(35,134,54,0.1);
+    font-size: 10px; color: #3fb950; margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .dark-h1 { font-size: 26px; font-weight: 800; letter-spacing: -1px; color: #f0f6fc; line-height: 1.15; margin-bottom: 10px; }
+  .dark-h1 span { color: #3fb950; }
+  .dark-sub { font-size: 12px; color: #8b949e; max-width: 320px; margin: 0 auto 20px; line-height: 1.6; }
+  .dark-actions { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .dark-btn-p { padding: 7px 16px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #238636; color: #fff; }
+  .dark-btn-o { padding: 7px 16px; border-radius: 6px; font-size: 11px; font-weight: 500; background: transparent; border: 1px solid #30363d; color: #c9d1d9; }
+
+  .dark-terminal {
+    margin: 0 20px 20px;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid #21262d;
+  }
+  .dark-term-bar {
+    background: #161b22; padding: 7px 12px;
+    display: flex; align-items: center; gap: 5px;
+    border-bottom: 1px solid #21262d;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dr { background: #ff5f57; } .dy { background: #ffbd2e; } .dg { background: #28c840; }
+  .dark-term-body {
+    background: #0d1117; padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.8; color: #8b949e;
+  }
+  .tc { color: #3fb950; } .tw { color: #d29922; }
+
+  .dark-features {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 20px 20px;
+  }
+  .dark-feat {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 7px; padding: 12px 14px;
+  }
+  .dark-feat-title { font-size: 11px; font-weight: 600; color: #c9d1d9; margin-bottom: 4px; }
+  .dark-feat-desc { font-size: 10px; color: #7d8590; line-height: 1.5; }
+
+  /* ======= LIGHT CARD ======= */
+  .light-preview {
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .light-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid #d0d7de;
+    background: rgba(255,255,255,0.95);
+  }
+  .light-logo { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #1f2328; }
+  .light-logomark {
+    width: 22px; height: 22px; background: #1a7f37; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace;
+  }
+  .light-nav-links { display: flex; gap: 20px; }
+  .light-nav-links span { font-size: 11px; color: #656d76; }
+  .light-nav-cta {
+    padding: 5px 12px; border-radius: 5px; font-size: 11px; font-weight: 600;
+    background: #1a7f37; color: #fff;
+  }
+
+  .light-hero {
+    padding: 36px 24px 28px; text-align: center;
+    background: radial-gradient(ellipse at top, rgba(26,127,55,0.06) 0%, transparent 65%);
+  }
+  .light-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid #1a7f37; background: rgba(26,127,55,0.08);
+    font-size: 10px; color: #1a7f37; margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .light-h1 { font-size: 26px; font-weight: 800; letter-spacing: -1px; color: #1f2328; line-height: 1.15; margin-bottom: 10px; }
+  .light-h1 span { color: #1a7f37; }
+  .light-sub { font-size: 12px; color: #656d76; max-width: 320px; margin: 0 auto 20px; line-height: 1.6; }
+  .light-actions { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .light-btn-p { padding: 7px 16px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #1a7f37; color: #fff; }
+  .light-btn-o { padding: 7px 16px; border-radius: 6px; font-size: 11px; font-weight: 500; background: transparent; border: 1px solid #d0d7de; color: #1f2328; }
+
+  .light-terminal {
+    margin: 0 20px 20px;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid #d0d7de;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .light-term-bar {
+    background: #f6f8fa; padding: 7px 12px;
+    display: flex; align-items: center; gap: 5px;
+    border-bottom: 1px solid #d0d7de;
+  }
+  .light-term-body {
+    background: #1b1f24; padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.8; color: #8b949e;
+  }
+
+  .light-features {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 20px 20px;
+  }
+  .light-feat {
+    background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 7px; padding: 12px 14px;
+  }
+  .light-feat-title { font-size: 11px; font-weight: 600; color: #1f2328; margin-bottom: 4px; }
+  .light-feat-desc { font-size: 10px; color: #656d76; line-height: 1.5; }
+
+  .note {
+    margin-top: 20px; padding: 14px 18px;
+    background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+    font-size: 12px; color: #8b949e; line-height: 1.6;
+  }
+  .note strong { color: #c9d1d9; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #0d1117; padding: 1px 5px; border-radius: 3px; color: #79c0ff; }
+</style>
+</head>
+<body>
+
+<h2>Light mode vs Dark mode</h2>
+<p class="subtitle">Both served from the same HTML file — system setting picks automatically via <code>prefers-color-scheme</code></p>
+
+<div class="split">
+  <!-- DARK -->
+  <div>
+    <div class="mode-label">🌑 dark mode (default)</div>
+    <div class="dark-preview">
+      <div class="dark-nav">
+        <div class="dark-logo"><div class="dark-logomark">w</div>watchd</div>
+        <div class="dark-nav-links"><span>Docs</span><span>GitHub</span></div>
+        <div class="dark-nav-cta">Get started →</div>
+      </div>
+      <div class="dark-hero">
+        <div class="dark-badge">● open source · v1.0.0</div>
+        <div class="dark-h1">Supply chain security<br>for <span>developer fleets</span></div>
+        <div class="dark-sub">watchd monitors every machine on your team and surfaces vulnerabilities before they reach production.</div>
+        <div class="dark-actions">
+          <div class="dark-btn-p">View on GitHub</div>
+          <div class="dark-btn-o">See dashboard →</div>
+        </div>
+      </div>
+      <div class="dark-terminal">
+        <div class="dark-term-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div>
+        <div class="dark-term-body">
+          <div><span style="color:#7d8590"># install and enroll</span></div>
+          <div><span class="tc">$ </span>npm i -g @wahid7852/watchd-agent</div>
+          <div><span class="tc">$ </span>watchd setup</div>
+          <div><span style="color:#3fb950">  ✔ enrolled · 420 packages indexed</span></div>
+          <div><span class="tw">  ⚠ 2 critical findings detected</span></div>
+        </div>
+      </div>
+      <div class="dark-features">
+        <div class="dark-feat"><div class="dark-feat-title">🔍 OSV Matching</div><div class="dark-feat-desc">Semver-aware CVE detection across npm and PyPI</div></div>
+        <div class="dark-feat"><div class="dark-feat-title">🖥️ Fleet View</div><div class="dark-feat-desc">All machines, all projects, one dashboard</div></div>
+        <div class="dark-feat"><div class="dark-feat-title">⚡ Live Heartbeats</div><div class="dark-feat-desc">15-second agent pulse, online/offline status</div></div>
+        <div class="dark-feat"><div class="dark-feat-title">🔄 Auto Remediation</div><div class="dark-feat-desc">One-click patch command sent to the agent</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHT -->
+  <div>
+    <div class="mode-label">☀️ light mode</div>
+    <div class="light-preview">
+      <div class="light-nav">
+        <div class="light-logo"><div class="light-logomark">w</div>watchd</div>
+        <div class="light-nav-links"><span>Docs</span><span>GitHub</span></div>
+        <div class="light-nav-cta">Get started →</div>
+      </div>
+      <div class="light-hero">
+        <div class="light-badge">● open source · v1.0.0</div>
+        <div class="light-h1">Supply chain security<br>for <span>developer fleets</span></div>
+        <div class="light-sub">watchd monitors every machine on your team and surfaces vulnerabilities before they reach production.</div>
+        <div class="light-actions">
+          <div class="light-btn-p">View on GitHub</div>
+          <div class="light-btn-o">See dashboard →</div>
+        </div>
+      </div>
+      <div class="light-terminal">
+        <div class="light-term-bar"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div>
+        <div class="light-term-body">
+          <div><span style="color:#7d8590"># install and enroll</span></div>
+          <div><span class="tc">$ </span>npm i -g @wahid7852/watchd-agent</div>
+          <div><span class="tc">$ </span>watchd setup</div>
+          <div><span style="color:#3fb950">  ✔ enrolled · 420 packages indexed</span></div>
+          <div><span class="tw">  ⚠ 2 critical findings detected</span></div>
+        </div>
+      </div>
+      <div class="light-features">
+        <div class="light-feat"><div class="light-feat-title">🔍 OSV Matching</div><div class="light-feat-desc">Semver-aware CVE detection across npm and PyPI</div></div>
+        <div class="light-feat"><div class="light-feat-title">🖥️ Fleet View</div><div class="light-feat-desc">All machines, all projects, one dashboard</div></div>
+        <div class="light-feat"><div class="light-feat-title">⚡ Live Heartbeats</div><div class="light-feat-desc">15-second agent pulse, online/offline status</div></div>
+        <div class="light-feat"><div class="light-feat-title">🔄 Auto Remediation</div><div class="light-feat-desc">One-click patch command sent to the agent</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>How it works in the actual code:</strong> One HTML file, one CSS block with <code>:root</code> for dark (default) and <code>@media (prefers-color-scheme: light) { :root { ... } }</code> to override. Zero JavaScript. The terminal snippet always stays dark regardless of mode — that's intentional and standard practice (GitHub does this too).
+</div>
+
+</body>
+</html>

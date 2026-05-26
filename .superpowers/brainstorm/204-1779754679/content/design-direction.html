@@ -1,0 +1,74 @@
+<h2>What aesthetic should watchd feel like?</h2>
+<p class="subtitle">Three directions — pick the one that feels right for a security monitoring tool</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="terminal-dark" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;padding:16px;font-family:monospace;font-size:11px;color:#00ff88;border-bottom:1px solid #1a1a1a">
+      <div style="color:#666;margin-bottom:8px">watchd v1.0.0 — fleet monitor</div>
+      <div style="display:flex;gap:24px;margin-bottom:10px">
+        <span>machines <span style="color:#fff">4</span></span>
+        <span>packages <span style="color:#fff">1,204</span></span>
+        <span>findings <span style="color:#ff4444">3 crit</span></span>
+      </div>
+      <div style="border:1px solid #1e3a1e;padding:8px;background:#0d1a0d">
+        <div style="color:#888;font-size:10px;margin-bottom:4px">● dev-machine-01 <span style="color:#00ff88">online</span></div>
+        <div style="color:#888;font-size:10px;margin-bottom:4px">● dev-machine-02 <span style="color:#00ff88">online</span></div>
+        <div style="color:#888;font-size:10px">● build-server <span style="color:#ff4444">offline</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Terminal Dark</h3>
+      <p>Monospace type, green-on-black palette, feels like <code>htop</code> or <code>btop</code>. Very "Linux daemon" energy. High contrast, no decorations.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="clean-light" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fafafa;padding:16px;font-family:system-ui,sans-serif;border-bottom:1px solid #eee">
+      <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:10px;letter-spacing:-0.3px">watchd</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:8px">
+          <div style="font-size:10px;color:#888;margin-bottom:2px">MACHINES</div>
+          <div style="font-size:18px;font-weight:700;color:#111">4</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:8px">
+          <div style="font-size:10px;color:#888;margin-bottom:2px">FINDINGS</div>
+          <div style="font-size:18px;font-weight:700;color:#e53e3e">3</div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:8px;font-size:10px">
+        <div style="display:flex;justify-content:space-between;color:#111;margin-bottom:4px"><span>dev-machine-01</span><span style="color:#16a34a">● online</span></div>
+        <div style="display:flex;justify-content:space-between;color:#111"><span>dev-machine-02</span><span style="color:#16a34a">● online</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Clean Light</h3>
+      <p>White background, subtle borders, tight typography. Vercel/Linear style — feels modern and professional. Easy to screenshot and post.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="dark-pro" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#111827;padding:16px;font-family:system-ui,sans-serif;border-bottom:1px solid #374151">
+      <div style="font-size:12px;font-weight:600;color:#f9fafb;margin-bottom:10px;letter-spacing:0.5px">WATCHD</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:#1f2937;border:1px solid #374151;border-radius:6px;padding:8px">
+          <div style="font-size:9px;color:#6b7280;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px">Machines</div>
+          <div style="font-size:18px;font-weight:700;color:#f9fafb">4</div>
+        </div>
+        <div style="background:#1f2937;border:1px solid #374151;border-radius:6px;padding:8px">
+          <div style="font-size:9px;color:#6b7280;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px">Findings</div>
+          <div style="font-size:18px;font-weight:700;color:#f87171">3</div>
+        </div>
+      </div>
+      <div style="background:#1f2937;border:1px solid #374151;border-radius:6px;padding:8px;font-size:10px">
+        <div style="display:flex;justify-content:space-between;color:#d1d5db;margin-bottom:4px"><span>dev-machine-01</span><span style="color:#4ade80">● online</span></div>
+        <div style="display:flex;justify-content:space-between;color:#d1d5db"><span>dev-machine-02</span><span style="color:#4ade80">● online</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Pro</h3>
+      <p>Dark gray palette (not pure black), clean sans-serif, subtle green accents for status. Grafana-lite feel but much less cluttered. Great for screenshots.</p>
+    </div>
+  </div>
+
+</div>
