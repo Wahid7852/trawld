@@ -103,7 +103,7 @@ export default function MachinesPage() {
           machineId={selectedId}
           refreshToken={refreshToken}
           onClose={() => setSelectedId(null)}
-          onRescan={async () => { await handleScan(selectedId); requestRefresh() }}
+          onRescan={() => handleScan(selectedId)}
         />
       )}
     </>

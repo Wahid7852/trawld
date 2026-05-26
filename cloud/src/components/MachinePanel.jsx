@@ -5,8 +5,8 @@ const SEV_DOT = { critical: 'bg-tr-red', high: 'bg-tr-yellow', medium: 'bg-tr-bl
 
 export default function MachinePanel({ machineId, refreshToken, onClose, onRescan }) {
   const { data, loading } = useMachineDetail(machineId, refreshToken)
-  const machine  = data.machine
-  const detail   = data.data
+  const machine  = data?.machine
+  const detail   = data?.data || {}
   const projects = detail.projects || []
   const alerts   = (detail.alerts || []).filter((a) => a.status !== 'ack')
   const packages = detail.packages || []
