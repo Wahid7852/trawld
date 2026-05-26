@@ -78,7 +78,7 @@ export default function Sidebar({ summary, wsConnected, open, onClose }) {
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-3 border-t border-tr-border">
+        <div className="px-3 py-3 border-t border-tr-border space-y-1.5">
           <div className="flex items-center gap-2 text-[11px] text-tr-dim px-1">
             <span
               className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -87,6 +87,17 @@ export default function Sidebar({ summary, wsConnected, open, onClose }) {
             />
             {onlineMachines} agent{onlineMachines !== 1 ? 's' : ''} live
           </div>
+          <p className="text-[10px] text-tr-dim px-1">
+            by{' '}
+            <a
+              href="https://github.com/Wahid7852"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-tr-text transition-colors"
+            >
+              Wahid Khan
+            </a>
+          </p>
         </div>
       </aside>
     </>

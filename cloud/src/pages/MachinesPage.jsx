@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import MachinePanel from '../components/MachinePanel'
 import { scanMachine } from '../api/machines'
+import { revokeAgent } from '../api/agents'
 import useAppShell from '../hooks/useAppShell'
 import useMachines from '../hooks/useMachines'
 
@@ -41,6 +42,16 @@ export default function MachinesPage() {
       requestRefresh()
     } catch (error) {
       console.error('Failed to rescan machine:', error)
+    }
+  }
+
+  const handleRemove = async (machineId) => {
+    if (!window.confirm('Remove this machine from the fleet? It will stop reporting until re-enrolled.')) return
+    try {
+      await revokeAgent(machineId)
+      requestRefresh()
+    } catch (error) {
+      console.error('Failed to remove machine:', error)
     }
   }
 
@@ -96,6 +107,9 @@ export default function MachinesPage() {
                 <div className="flex gap-2">
                   <button className="btn text-[11px]" onClick={() => handleScan(m.uuid)}>Rescan</button>
                   <button className="btn-primary text-[11px]" onClick={() => setSelectedId(m.uuid)}>Inspect</button>
+                  {!isOnline(m) && (
+                    <button className="btn text-[11px] text-tr-red hover:text-tr-red" onClick={() => handleRemove(m.uuid)}>Remove</button>
+                  )}
                 </div>
               </div>
             ))}

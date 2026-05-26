@@ -252,6 +252,8 @@ function versionMatches(pkgVersion, affectedEntries) {
 function buildMachineSummary(machineId) {
   const machine = state.machines.get(machineId);
   if (!machine) return null;
+  // Hide revoked machines
+  if (state.enrolledAgents.get(machineId)?.revoked) return null;
 
   const projects = Array.from(state.projects.values()).filter((project) => project.machine_id === machineId);
   const projectIds = new Set(projects.map((project) => project.id));
@@ -323,8 +325,15 @@ function buildProjectSummary(projectId) {
 }
 
 function deriveState({ machineId = "", projectId = "" } = {}) {
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const machineList = Array.from(state.machines.keys())
-    .filter((candidate) => !machineId || candidate === machineId)
+    .filter((candidate) => {
+      if (machineId && candidate !== machineId) return false;
+      const m = state.machines.get(candidate);
+      // Drop machines silent for 30+ days
+      if (m?.last_seen && new Date(m.last_seen).getTime() < thirtyDaysAgo) return false;
+      return true;
+    })
     .map((candidate) => buildMachineSummary(candidate))
     .filter(Boolean);
 
