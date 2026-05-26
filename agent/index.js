@@ -726,9 +726,17 @@ function findNodeProjectsUnderRoots(rootPaths, options = {}) {
 }
 
 function detectJavaScriptPackageManager(projectRoot) {
-  if (fs.existsSync(path.join(projectRoot, "pnpm-lock.yaml"))) return { command: "pnpm", args: ["add", RUNTIME_PACKAGE_NAME] };
+  if (fs.existsSync(path.join(projectRoot, "pnpm-lock.yaml"))) {
+    const isWorkspaceRoot = fs.existsSync(path.join(projectRoot, "pnpm-workspace.yaml"));
+    return { command: "pnpm", args: ["add", ...(isWorkspaceRoot ? ["-w"] : []), RUNTIME_PACKAGE_NAME] };
+  }
   if (fs.existsSync(path.join(projectRoot, "yarn.lock"))) return { command: "yarn", args: ["add", RUNTIME_PACKAGE_NAME] };
   return { command: "npm", args: ["install", RUNTIME_PACKAGE_NAME] };
+}
+
+function resolveCommand(command) {
+  if (process.platform !== "win32") return command;
+  return /^(npm|pnpm|yarn|npx)$/i.test(command) ? `${command}.cmd` : command;
 }
 
 async function installRuntimeIntegration(projectRoots) {
@@ -741,7 +749,12 @@ async function installRuntimeIntegration(projectRoots) {
       await runProjectCommand(manager.command, manager.args, projectRoot);
       installed.push({ root: projectRoot, command: `${manager.command} ${manager.args.join(" ")}` });
     } catch (error) {
-      failed.push({ root: projectRoot, command: `${manager.command} ${manager.args.join(" ")}`, error: error.message });
+      const msg = error.message || "";
+      // Skip platform-incompatible projects (e.g. macOS-only packages on Windows)
+      if (msg.includes("EBADPLATFORM") || msg.includes("Unsupported platform")) continue;
+      // Skip yarn/npm quarantine — newly published packages, resolves on its own
+      if (msg.includes("quarantined") || msg.includes("can't be resolved to a satisfying range")) continue;
+      failed.push({ root: projectRoot, command: `${manager.command} ${manager.args.join(" ")}`, error: msg });
     }
   }
 
@@ -1170,9 +1183,9 @@ async function bootstrapConfiguredProjects() {
 
 function runProjectCommand(command, args, cwd) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(resolveCommand(command), args, {
       cwd,
-      shell: true,
+      shell: false,
       windowsHide: true
     });
 
@@ -1362,20 +1375,19 @@ function getServiceCommand() {
   return `"${process.execPath}" "${__filename}" start`;
 }
 
+const STARTUP_REG_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+
 async function installServiceTask() {
   if (process.platform !== "win32") {
     throw new Error("service installation is only supported on Windows in this release");
   }
-
-  await runCommand("schtasks", [
-    "/Create",
-    "/TN",
-    SERVICE_TASK_NAME,
-    "/TR",
-    getServiceCommand(),
-    "/SC",
-    "ONLOGON",
-    "/F"
+  // HKCU registry run key — no admin required
+  await runCommand("reg", [
+    "add", STARTUP_REG_KEY,
+    "/v", SERVICE_TASK_NAME,
+    "/t", "REG_SZ",
+    "/d", getServiceCommand(),
+    "/f"
   ]);
 }
 
@@ -1383,18 +1395,27 @@ async function uninstallServiceTask() {
   if (process.platform !== "win32") {
     throw new Error("service removal is only supported on Windows in this release");
   }
-
-  await runCommand("schtasks", ["/Delete", "/TN", SERVICE_TASK_NAME, "/F"]);
+  try {
+    await runCommand("reg", ["delete", STARTUP_REG_KEY, "/v", SERVICE_TASK_NAME, "/f"]);
+  } catch {}
+  // Also clean up any legacy schtasks entry
+  try {
+    await runCommand("schtasks", ["/Delete", "/TN", SERVICE_TASK_NAME, "/F"]);
+  } catch {}
 }
 
 async function isServiceInstalled() {
   if (process.platform !== "win32") return false;
-
   try {
-    await runCommand("schtasks", ["/Query", "/TN", SERVICE_TASK_NAME]);
+    await runCommand("reg", ["query", STARTUP_REG_KEY, "/v", SERVICE_TASK_NAME]);
     return true;
   } catch {
-    return false;
+    try {
+      await runCommand("schtasks", ["/Query", "/TN", SERVICE_TASK_NAME]);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
