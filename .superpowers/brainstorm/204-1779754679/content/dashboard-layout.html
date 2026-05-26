@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>watchd — dashboard mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif; font-size: 13px; padding: 24px; }
+  h2 { font-size: 15px; font-weight: 600; color: #e6edf3; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #7d8590; margin-bottom: 20px; }
+
+  .shell {
+    display: flex;
+    height: 580px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    background: #161b22;
+    border-right: 1px solid #21262d;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid #21262d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-icon {
+    width: 22px; height: 22px;
+    background: #238636;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+  }
+  .logo-text { font-size: 13px; font-weight: 600; color: #e6edf3; letter-spacing: -0.2px; }
+  .logo-ver { font-size: 10px; color: #7d8590; margin-left: auto; }
+
+  .nav-section { padding: 12px 8px 4px; }
+  .nav-label { font-size: 10px; color: #7d8590; text-transform: uppercase; letter-spacing: 0.8px; padding: 0 8px; margin-bottom: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px;
+    color: #7d8590; font-size: 12px; cursor: pointer;
+    margin-bottom: 1px;
+  }
+  .nav-item.active { background: #1f2937; color: #e6edf3; }
+  .nav-item:hover { background: #1c2128; color: #c9d1d9; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: #7d8590; flex-shrink: 0; }
+  .nav-dot.green { background: #238636; }
+  .nav-dot.red { background: #da3633; }
+  .nav-dot.yellow { background: #d29922; }
+  .nav-badge { margin-left: auto; background: #da3633; color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 600; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 12px 8px;
+    border-top: 1px solid #21262d;
+  }
+  .agent-status {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 8px; border-radius: 6px;
+    font-size: 11px; color: #7d8590;
+  }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; background: #238636; flex-shrink: 0; }
+
+  /* Main */
+  .main { flex: 1; overflow-y: auto; background: #0d1117; }
+  .main::-webkit-scrollbar { width: 4px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: #21262d; border-radius: 4px; }
+
+  .topbar {
+    padding: 14px 20px;
+    border-bottom: 1px solid #21262d;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #0d1117;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .page-title { font-size: 14px; font-weight: 600; color: #e6edf3; }
+  .page-sub { font-size: 11px; color: #7d8590; }
+  .topbar-actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 500;
+    cursor: pointer; border: 1px solid #21262d; background: #161b22; color: #c9d1d9;
+  }
+  .btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
+
+  .content { padding: 16px 20px; }
+
+  /* Metric row */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .metric {
+    background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .metric-label { font-size: 10px; color: #7d8590; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 700; color: #e6edf3; line-height: 1; margin-bottom: 4px; }
+  .metric-value.red { color: #f85149; }
+  .metric-value.green { color: #3fb950; }
+  .metric-sub { font-size: 10px; color: #7d8590; }
+
+  /* Two column */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .card {
+    background: #161b22; border: 1px solid #21262d; border-radius: 8px; overflow: hidden;
+  }
+  .card-head {
+    padding: 10px 14px; border-bottom: 1px solid #21262d;
+    font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-body { padding: 12px 14px; }
+
+  /* Machine rows */
+  .machine-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; border-bottom: 1px solid #1c2128;
+    font-size: 12px;
+  }
+  .machine-row:last-child { border-bottom: none; }
+  .machine-name { color: #c9d1d9; font-weight: 500; }
+  .machine-meta { color: #7d8590; font-size: 10px; margin-top: 1px; }
+  .badge { padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .badge-green { background: #0f2817; color: #3fb950; }
+  .badge-red { background: #2d1115; color: #f85149; }
+  .badge-gray { background: #1c2128; color: #7d8590; }
+
+  /* Alert rows */
+  .alert-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid #1c2128;
+  }
+  .alert-row:last-child { border-bottom: none; }
+  .sev { width: 6px; height: 6px; border-radius: 2px; margin-top: 4px; flex-shrink: 0; }
+  .sev.crit { background: #f85149; }
+  .sev.high { background: #d29922; }
+  .sev.med { background: #388bfd; }
+  .alert-pkg { color: #c9d1d9; font-size: 12px; font-weight: 500; }
+  .alert-detail { color: #7d8590; font-size: 10px; margin-top: 1px; }
+  .alert-right { margin-left: auto; text-align: right; }
+  .cve { font-size: 10px; color: #388bfd; font-family: monospace; }
+
+  /* Sparkline fake */
+  .sparkline { display: flex; align-items: flex-end; gap: 3px; height: 40px; }
+  .bar { flex: 1; background: #21262d; border-radius: 2px; }
+
+  .full-card { margin-bottom: 16px; }
+  .tag { font-size: 10px; color: #7d8590; }
+</style>
+</head>
+<body>
+
+<h2>watchd — dashboard preview</h2>
+<p class="subtitle">Dark Pro layout · sidebar nav · 4 pages · no mockup data</p>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">w</div>
+      <span class="logo-text">watchd</span>
+      <span class="logo-ver">v1.0</span>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Monitor</div>
+      <div class="nav-item active">
+        <div class="nav-dot green"></div>
+        Overview
+      </div>
+      <div class="nav-item">
+        <div class="nav-dot"></div>
+        Machines
+      </div>
+      <div class="nav-item">
+        <div class="nav-dot red"></div>
+        Alerts
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-dot"></div>
+        Packages
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="agent-status">
+        <div class="pulse"></div>
+        4 agents live
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Fleet Overview</div>
+        <div class="page-sub">Last sync 12s ago</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn">Sync OSV</button>
+        <button class="btn btn-primary">Rescan Fleet</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Metrics -->
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Machines</div>
+          <div class="metric-value">4</div>
+          <div class="metric-sub">3 online</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Projects</div>
+          <div class="metric-value">18</div>
+          <div class="metric-sub">across fleet</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Packages</div>
+          <div class="metric-value">1,204</div>
+          <div class="metric-sub">npm + PyPI</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Open Findings</div>
+          <div class="metric-value red">7</div>
+          <div class="metric-sub">3 critical</div>
+        </div>
+      </div>
+
+      <!-- Two cols -->
+      <div class="cols">
+        <!-- Machines -->
+        <div class="card">
+          <div class="card-head">
+            Machines
+            <span class="tag">click to inspect</span>
+          </div>
+          <div class="card-body">
+            <div class="machine-row">
+              <div>
+                <div class="machine-name">dev-machine-01</div>
+                <div class="machine-meta">ubuntu 22.04 · 8 projects · 420 pkgs</div>
+              </div>
+              <span class="badge badge-green">online</span>
+            </div>
+            <div class="machine-row">
+              <div>
+                <div class="machine-name">dev-machine-02</div>
+                <div class="machine-meta">macos 14 · 5 projects · 312 pkgs</div>
+              </div>
+              <span class="badge badge-green">online</span>
+            </div>
+            <div class="machine-row">
+              <div>
+                <div class="machine-name">build-server</div>
+                <div class="machine-meta">debian 12 · 3 projects · 210 pkgs</div>
+              </div>
+              <span class="badge badge-red">offline</span>
+            </div>
+            <div class="machine-row">
+              <div>
+                <div class="machine-name">laptop-wahid</div>
+                <div class="machine-meta">windows 11 · 2 projects · 262 pkgs</div>
+              </div>
+              <span class="badge badge-green">online</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="card">
+          <div class="card-head">
+            Recent Findings
+            <span class="tag">3 unacknowledged</span>
+          </div>
+          <div class="card-body">
+            <div class="alert-row">
+              <div class="sev crit"></div>
+              <div>
+                <div class="alert-pkg">lodash@4.17.20</div>
+                <div class="alert-detail">dev-machine-01 · my-api project</div>
+              </div>
+              <div class="alert-right"><div class="cve">CVE-2021-23337</div></div>
+            </div>
+            <div class="alert-row">
+              <div class="sev crit"></div>
+              <div>
+                <div class="alert-pkg">axios@0.21.1</div>
+                <div class="alert-detail">dev-machine-02 · frontend project</div>
+              </div>
+              <div class="alert-right"><div class="cve">CVE-2023-45857</div></div>
+            </div>
+            <div class="alert-row">
+              <div class="sev high"></div>
+              <div>
+                <div class="alert-pkg">requests@2.27.0</div>
+                <div class="alert-detail">build-server · data-pipeline</div>
+              </div>
+              <div class="alert-right"><div class="cve">CVE-2023-32681</div></div>
+            </div>
+            <div class="alert-row">
+              <div class="sev med"></div>
+              <div>
+                <div class="alert-pkg">semver@5.7.1</div>
+                <div class="alert-detail">dev-machine-01 · watchd-agent</div>
+              </div>
+              <div class="alert-right"><div class="cve">CVE-2022-25883</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity -->
+      <div class="full-card card">
+        <div class="card-head">Activity</div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:0">
+          <div class="machine-row">
+            <div style="color:#7d8590;font-size:11px;font-family:monospace;min-width:80px">14:22:01</div>
+            <div style="color:#c9d1d9;font-size:12px">dev-machine-01 enrolled · 420 packages indexed</div>
+            <span class="badge badge-green" style="margin-left:auto">enroll</span>
+          </div>
+          <div class="machine-row">
+            <div style="color:#7d8590;font-size:11px;font-family:monospace;min-width:80px">14:19:48</div>
+            <div style="color:#c9d1d9;font-size:12px">OSV sync complete · 2 new CVEs matched</div>
+            <span class="badge badge-red" style="margin-left:auto">alert</span>
+          </div>
+          <div class="machine-row">
+            <div style="color:#7d8590;font-size:11px;font-family:monospace;min-width:80px">14:11:03</div>
+            <div style="color:#c9d1d9;font-size:12px">laptop-wahid heartbeat · all projects healthy</div>
+            <span class="badge badge-gray" style="margin-left:auto">heartbeat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:16px;font-size:11px;color:#7d8590">
+  Pages: <strong style="color:#c9d1d9">Overview · Machines · Alerts · Packages</strong> &nbsp;|&nbsp;
+  Cut: Analytics (trends folded into overview), Machine Detail (slide-out panel in Machines page) &nbsp;|&nbsp;
+  Landing page will be a separate route at <code style="color:#388bfd">/</code>, dashboard at <code style="color:#388bfd">/dashboard</code>
+</p>
+
+</body>
+</html>
