@@ -1068,7 +1068,8 @@ app.post("/api/agents/heartbeat", attachAgentSession, async (req, res) => {
     }
   });
   broadcastDashboard({ type: "MACHINE_UPDATE", machine: buildMachineSummary(machineId) });
-  res.json({ ok: true, agent: sanitizeAgent(agent) });
+  const hasProjects = Array.from(state.projects.values()).some((p) => p.machine_id === machineId);
+  res.json({ ok: true, agent: sanitizeAgent(agent), rescan_requested: !hasProjects });
 });
 
 app.post("/api/agents/:id/revoke", async (req, res) => {

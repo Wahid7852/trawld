@@ -1499,6 +1499,12 @@ async function sendHttpHeartbeat() {
       const body = await response.json().catch(() => ({}));
       throw new Error(body.error || `cloud returned ${response.status}`);
     }
+    const body = await response.json().catch(() => ({}));
+    if (body.rescan_requested) {
+      logAction("server has no project data — clearing snapshot cache and rescanning");
+      state.projects.clear();
+      runAutomatedRootDiscovery("server-rescan").catch(() => {});
+    }
     return true;
   } catch (error) {
     logAction(`heartbeat failed message=${error.message}`);
