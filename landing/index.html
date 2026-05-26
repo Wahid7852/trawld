@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>trawld — Package vulnerability monitoring for developer fleets</title>
+  <meta name="description" content="trawld monitors every machine on your team, scans packages against the OSV database, and surfaces vulnerable dependencies before they reach production.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-mark">t</div>
+    <span class="nav-wordmark">trawld</span>
+  </div>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#features">Features</a>
+    <a href="https://github.com/Wahid7852/Sentry" target="_blank" rel="noopener">GitHub</a>
+  </div>
+  <div class="nav-actions">
+    <a class="btn-ghost" href="https://github.com/Wahid7852/Sentry" target="_blank" rel="noopener">
+      <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a class="btn-cta" href="#how-it-works">Get started →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">open source · v1.0.0</div>
+  <h1>Package vulnerability<br>monitoring for <em>developer fleets</em></h1>
+  <p class="hero-sub">
+    trawld watches every machine on your team, scans packages against the OSV database,
+    and surfaces vulnerable dependencies before they reach production.
+  </p>
+  <div class="hero-actions">
+    <a class="btn-big" href="https://github.com/Wahid7852/Sentry" target="_blank" rel="noopener">
+      <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      View on GitHub
+    </a>
+    <a class="btn-big-outline" href="#dashboard">See the dashboard →</a>
+  </div>
+
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <span class="term-title">terminal</span>
+    </div>
+    <div class="term-body">
+<span class="t-comment"># install the agent globally</span>
+<span class="t-green">$</span> npm install -g @wahid7852/trawld-agent
+
+<span class="t-green">$</span> trawld setup
+  <span class="t-green">✔</span> Connected to cloud at https://trawld.vercel.app
+  <span class="t-green">✔</span> Watching 3 project roots
+  <span class="t-green">✔</span> Enrolled as dev-machine-01 · 420 packages indexed
+  <span class="t-warn">⚠</span> 2 critical findings · open dashboard to review</div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-value">1,200+</div>
+    <div class="stat-label">packages scanned per machine</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">~15s</div>
+    <div class="stat-label">heartbeat interval</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">OSV</div>
+    <div class="stat-label">vulnerability database</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">npm + PyPI</div>
+    <div class="stat-label">ecosystems supported</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works">
+  <p class="section-eyebrow">// how it works</p>
+  <h2 class="section-title">Three steps to fleet coverage</h2>
+  <p class="section-sub">Works on Linux, macOS, and Windows. No app-level code changes required.</p>
+  <div class="steps">
+    <div class="step">
+      <p class="step-num">01 / deploy</p>
+      <h3>Deploy the cloud brain</h3>
+      <p>One-click Vercel deploy. Point it at a MongoDB database and you're done — it serves the dashboard and accepts agent connections.</p>
+      <div class="step-code">vercel deploy ./cloud</div>
+    </div>
+    <div class="step">
+      <p class="step-num">02 / install</p>
+      <h3>Install the agent</h3>
+      <p>Global npm package. The setup wizard chooses project folders, configures startup, and enrolls the machine with your cloud instance.</p>
+      <div class="step-code">npm i -g @wahid7852/trawld-agent
+trawld setup</div>
+    </div>
+    <div class="step">
+      <p class="step-num">03 / watch</p>
+      <h3>Open the dashboard</h3>
+      <p>Your machine appears in the fleet, packages are indexed, and vulnerabilities are matched against OSV. Live heartbeats keep status current.</p>
+      <div class="step-code">https://your-cloud.vercel.app</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="features-inner">
+    <p class="section-eyebrow">// features</p>
+    <h2 class="section-title">Built for security-conscious teams</h2>
+    <p class="section-sub" style="margin-bottom:32px">Every feature ships by default. Nothing to configure beyond the initial setup.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3>Passive project discovery</h3>
+        <p>The agent scans watched folders for package.json and requirements.txt. No code changes to your apps required.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <h3>OSV vulnerability matching</h3>
+        <p>Package versions are checked against the Open Source Vulnerability database with semver-range matching to catch indirect exposure.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🖥️</div>
+        <h3>Multi-machine fleet view</h3>
+        <p>Every enrolled machine reports to one dashboard. See cross-fleet exposure at a glance and drill into any machine instantly.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔄</div>
+        <h3>Auto-remediation queue</h3>
+        <p>One click sends a patch command back to the agent. It updates the package and reports the new version automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="preview-section" id="dashboard">
+  <p class="section-eyebrow">// dashboard</p>
+  <h2 class="section-title">Everything in one view</h2>
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <div class="preview-url">https://trawld.vercel.app</div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-sidebar">
+        <div class="ps-logo">trawld</div>
+        <div class="ps-nav active">Overview</div>
+        <div class="ps-nav">Machines</div>
+        <div class="ps-nav">Alerts</div>
+        <div class="ps-nav">Packages</div>
+      </div>
+      <div class="preview-main">
+        <div class="pm-metrics">
+          <div class="pm-metric"><div class="pm-label">Machines</div><div class="pm-value">4</div></div>
+          <div class="pm-metric"><div class="pm-label">Projects</div><div class="pm-value">18</div></div>
+          <div class="pm-metric"><div class="pm-label">Packages</div><div class="pm-value">1,204</div></div>
+          <div class="pm-metric"><div class="pm-label">Findings</div><div class="pm-value red">7</div></div>
+        </div>
+        <div class="pm-cols">
+          <div class="pm-card">
+            <div class="pm-head">Machines</div>
+            <div class="pm-row"><span>dev-machine-01</span><span class="pm-badge pm-bg">online</span></div>
+            <div class="pm-row"><span>dev-machine-02</span><span class="pm-badge pm-bg">online</span></div>
+            <div class="pm-row"><span>build-server</span><span class="pm-badge pm-br">offline</span></div>
+            <div class="pm-row"><span>laptop-wahid</span><span class="pm-badge pm-bg">online</span></div>
+          </div>
+          <div class="pm-card">
+            <div class="pm-head">Recent Findings</div>
+            <div class="pm-row"><span style="color:#f85149">●</span> <span style="margin-left:4px">lodash@4.17.20</span><span style="color:#7d8590;font-size:8px">CRIT</span></div>
+            <div class="pm-row"><span style="color:#f85149">●</span> <span style="margin-left:4px">axios@0.21.1</span><span style="color:#7d8590;font-size:8px">CRIT</span></div>
+            <div class="pm-row"><span style="color:#d29922">●</span> <span style="margin-left:4px">requests@2.27.0</span><span style="color:#7d8590;font-size:8px">HIGH</span></div>
+            <div class="pm-row"><span style="color:#388bfd">●</span> <span style="margin-left:4px">semver@5.7.1</span><span style="color:#7d8590;font-size:8px">MED</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">trawld</span>
+  <div class="footer-links">
+    <a href="https://github.com/Wahid7852/Sentry" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.npmjs.com/package/@wahid7852/trawld-agent" target="_blank" rel="noopener">npm</a>
+  </div>
+  <span class="footer-right">MIT License · built by Wahid Khan</span>
+</footer>
+
+</body>
+</html>
