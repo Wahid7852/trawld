@@ -1,6 +1,6 @@
-import { startTransition, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import TopNav from '../components/TopNav'
+import Sidebar from '../components/Sidebar'
 import useFleetSummary from '../hooks/useFleetSummary'
 import { getSystemInfo, ingestNow } from '../api/system'
 import { normalizeState } from '../utils/state'
@@ -61,64 +61,38 @@ export default function AppShell() {
       const schedulePoll = () => {
         const intervalMs = idlePollsRef.current >= 6 ? 30000 : idlePollsRef.current >= 2 ? 15000 : 5000
         pollRef.current = setTimeout(async () => {
-          if (!isDisposed) {
-            await pollSystemInfo()
-            schedulePoll()
-          }
+          if (!isDisposed) { await pollSystemInfo(); schedulePoll() }
         }, intervalMs)
       }
       schedulePoll()
-
-      return () => {
-        isDisposed = true
-        if (pollRef.current) clearTimeout(pollRef.current)
-      }
+      return () => { isDisposed = true; if (pollRef.current) clearTimeout(pollRef.current) }
     }
 
     const connect = () => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const ws = new WebSocket(`${protocol}//${window.location.host}/agents`)
       socketRef.current = ws
-
       ws.onopen = () => {
         if (isDisposed) return
         setWsConnected(true)
         ws.send(JSON.stringify({ type: 'DASHBOARD_HELLO' }))
       }
-
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data)
-
           if (message.type === 'STATE_SYNC' && message.state) {
-            startTransition(() => {
-              setSummary(normalizeState(message.state))
-              setRefreshToken((current) => current + 1)
-            })
+            startTransition(() => { setSummary(normalizeState(message.state)); setRefreshToken((c) => c + 1) })
             return
           }
-
           if (['MACHINE_UPDATE', 'PROJECT_UPDATE', 'INVENTORY_UPDATE', 'ALERT_UPDATE', 'AGENT_STATUS_UPDATE'].includes(message.type)) {
-            setRefreshToken((current) => current + 1)
+            setRefreshToken((c) => c + 1)
           }
-        } catch (error) {
-          console.error('WebSocket message error:', error)
-        }
+        } catch (error) { console.error('WebSocket message error:', error) }
       }
-
-      ws.onclose = () => {
-        if (isDisposed) return
-        setWsConnected(false)
-        reconnectRef.current = setTimeout(connect, 5000)
-      }
-
-      ws.onerror = () => {
-        setWsConnected(false)
-      }
+      ws.onclose = () => { if (isDisposed) return; setWsConnected(false); reconnectRef.current = setTimeout(connect, 5000) }
+      ws.onerror = () => { setWsConnected(false) }
     }
-
     connect()
-
     return () => {
       isDisposed = true
       if (reconnectRef.current) clearTimeout(reconnectRef.current)
@@ -136,9 +110,8 @@ export default function AppShell() {
     }
   }, [summary.state_version, summary.last_updated])
 
-  const handleIngestNow = async () => {
+  const handleIngestNow = useCallback(async () => {
     if (ingesting) return
-
     try {
       setIngesting(true)
       await ingestNow()
@@ -148,29 +121,24 @@ export default function AppShell() {
     } finally {
       setIngesting(false)
     }
-  }
+  }, [ingesting])
 
   const shellContext = useMemo(() => ({
     refreshToken,
     requestRefresh,
     systemInfo,
     summary,
-    wsConnected
-  }), [refreshToken, requestRefresh, systemInfo, summary, wsConnected])
+    wsConnected,
+    ingesting,
+    onIngestNow: handleIngestNow,
+  }), [refreshToken, systemInfo, summary, wsConnected, ingesting])
 
   return (
-    <div className="app-canvas min-h-screen">
-      <TopNav
-        wsConnected={wsConnected}
-        summary={summary}
-        summaryLoading={summaryLoading}
-        onRefresh={requestRefresh}
-        onIngestNow={handleIngestNow}
-        ingesting={ingesting}
-      />
-      <main className="app-shell mx-auto max-w-[1720px] px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-12 2xl:px-12">
+    <div className="flex min-h-screen bg-tr-bg">
+      <Sidebar summary={summary} wsConnected={wsConnected} />
+      <div className="flex-1 flex flex-col min-w-0">
         <Outlet context={shellContext} />
-      </main>
+      </div>
     </div>
   )
 }
