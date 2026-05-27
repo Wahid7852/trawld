@@ -35,9 +35,12 @@ export default function Sidebar({ summary, wsConnected, open, onClose }) {
       `}>
         {/* Logo */}
         <div className="flex items-center gap-2 px-4 py-[18px] border-b border-tr-border">
-          <div className="w-[22px] h-[22px] bg-tr-accent rounded flex items-center justify-center text-[11px] font-bold text-white font-mono">
-            t
-          </div>
+          <img
+            src="/logo.png"
+            alt=""
+            aria-hidden="true"
+            className="w-6 h-6 rounded-full object-cover border border-[#2b6fbd] bg-tr-bg"
+          />
           <span className="text-[13px] font-semibold text-tr-text tracking-[-0.2px]">trawld</span>
           <span className="ml-auto text-[10px] text-tr-dim font-mono">v1.0</span>
           {/* Close button - mobile only */}
