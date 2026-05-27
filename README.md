@@ -1,3 +1,5 @@
+![trawld search daemon banner](./assets/banner.png)
+
 # trawld
 
 Package vulnerability monitoring for developer fleets. trawld watches every enrolled machine, discovers projects automatically, and surfaces vulnerable dependencies in a real-time dashboard - no code changes to your apps required.

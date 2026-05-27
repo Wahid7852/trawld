@@ -152,7 +152,12 @@ export default function AppShell() {
             <span className="w-4 h-px bg-current block" />
           </button>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 bg-tr-accent rounded flex items-center justify-center text-[10px] font-bold text-white font-mono">t</div>
+            <img
+              src="/logo.png"
+              alt=""
+              aria-hidden="true"
+              className="w-5 h-5 rounded-full object-cover border border-[#2b6fbd] bg-tr-bg"
+            />
             <span className="text-[13px] font-semibold text-tr-text">trawld</span>
           </div>
         </div>
